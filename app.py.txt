@@ -1,0 +1,42 @@
+import streamlit as st
+import tensorflow as tf
+import numpy as np
+from PIL import Image
+
+# Load model
+@st.cache_resource
+def load_model():
+    model = tf.keras.models.load_model("mango_cnn_model.h5")
+    return model
+
+model = load_model()
+
+# Class labels
+class_labels = ['Grade A', 'Grade B', 'Grade C']
+
+# Page title
+st.title("🥭 Mango Quality Grading System")
+st.subheader("Upload a mango image to predict its quality grade.")
+
+# File uploader
+uploaded_file = st.file_uploader("Choose a mango image", type=["jpg", "jpeg", "png"])
+
+if uploaded_file is not None:
+    # Display uploaded image
+    image = Image.open(uploaded_file)
+    st.image(image, caption="Uploaded Mango Image", use_column_width=True)
+
+    # Preprocess the image
+    img = image.resize((180, 180))
+    img_array = np.array(img) / 255.0
+    img_array = np.expand_dims(img_array, axis=0)
+
+    # Prediction
+    prediction = model.predict(img_array)
+    predicted_index = np.argmax(prediction)
+    predicted_label = class_labels[predicted_index]
+    confidence = prediction[0][predicted_index] * 100
+
+    # Display results
+    st.success(f"✅ Predicted Grade: **{predicted_label}**")
+    st.info(f"🔍 Confidence: **{confidence:.2f}%**")
